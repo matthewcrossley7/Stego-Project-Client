@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div  th:replace="fragments :: navbar"/>
+<div class="w3-col m6 w3-padding-large">
+    <h1 class="w3-center" th:text="'Select an image to send'"></h1><br>
+    <div th:if="${status == 'success'}">
+        <p th:text="'Successfully sent file ' + ${sentFile}"></p>
+    </div>
+    <div th:if="${status == 'noImage'}">
+        <p th:text="'No image selected '"></p>
+    </div>
+    <div th:if="${status == 'noEmail'}">
+        <p th:text="'No email selected '"></p>
+    </div>
+    <div th:if="${status == 'neither'}">
+        <p th:text="'No email or file selected '"></p>
+    </div>
+    <form action="#" th:action="@{/send(email=${toEmail})}"  method="post">
+        <select name="friend" >
+            <option th:text="'Select a friend'" th:value="'unselected'"/>
+            <option th:each="friend :${friendArray}"
+                    th:text="${friend}" th:value="${friend}" />
+            <!--<ul th:each="friend : ${friendArray}" >
+                <option th:text="${friend}" th:value="${friend}"/>
+            </ul>-->
+
+        </select>
+        <div class="form-group">                            <!--th:value="${fileName}"-->
+            <input type="file" name="fileName"  class="form-control-file" th:value="${fileName}"  accept="image/x-png" >
+        </div>
+        <button type="submit" >
+            Click To Send
+        </button>
+        <!--<input type="file" onchange="encodeImageFileAsURL(this)" />-->
+       <!-- <button type="submit" class="btn btn-primary">Upload File</button> -->
+    </form>
+</div>
+
+</body>
+</html>
+<script>
+function showAlert() {
+    alert("The button was clicked!");
+}
+console.log("js working :)");
+    function CheckInputComplete(inputId)
+    {
+        let elem = document.getElementById(inputId);
+        console.log(elem);
+    }
+
+    function encodeImageFileAsURL(element) {
+  var file = element.files[0];
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    console.log('RESULT', reader.result)
+  }
+  reader.readAsDataURL(file);
+}
+</script>
+<!--SENDING OBJECTS
+
+ <form action="#" th:action="@{/send}" th:object="${greeting}" method="post">
+        <p>Id: <input type="text" th:field="*{id}" /></p>
+        <p>Message: <input type="text" th:field="*{content}" /></p>
+        <p><input type="submit" value="Submit" /> <input type="reset" value="Reset" /></p>
+    </form>
+
+    -->

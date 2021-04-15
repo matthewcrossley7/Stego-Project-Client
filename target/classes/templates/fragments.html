@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="header">
+    <meta charset="UTF-8">
+    <title>Stego Project</title>
+
+</head>
+<body>
+
+<!--https://www.youtube.com/watch?v=IeK-Imp9_Q0&ab_channel=CodeJava -->
+<div th:fragment="navbar">
+    <h1 class="w3-center" th:text="'Logged in as: ' + ${name} + ' ' + ${email}"></h1><br>
+    <a href="/homepage">Home</a>
+    <a href="/encode">Encode</a>
+    <a href="/decode">Decode</a>
+    <a href="/viewFriends">View Friends</a>
+    <a href="/send">Send</a>
+
+    <!--<a href="/addFriend">Add Friend</a> -->
+    <a href="/viewMsgs">View Messages</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+</div>
+</body>
+</html>

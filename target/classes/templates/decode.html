@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div  th:replace="fragments :: navbar"/>
+<div class="w3-col m6 w3-padding-large">
+    <h1 >Select a file to decode </h1><br>
+    <div th:if="${msg != null}">
+       <span th:text="'The encoded message of ' + ${fileName}+' is: '"></span> <h1><span th:text="${msg}"></span> </h1>
+    </div>
+    <form action="#" th:action="@{/decode}"  method="post">
+        <div class="form-group">
+            <input type="file" name="fileName" id="fileName"  class="form-control-file" th:value="${fileName}" accept="image/x-png" >
+            Key to use<input type="text" name="key" id="key" class="form-control-file" th:value="${key}"  ><br>
+        </div>
+
+        <button type="submit" onClick="return empty()" > Click To Decode </button>
+
+           </form>
+
+</div>
+
+</body>
+</html>
+
+<script>
+    function empty() {
+
+    var x;
+    x = document.getElementById("fileName").value;
+    if (x == "") {
+        alert("Please select a file");
+        return false;
+    };
+}
+</script>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div  th:replace="fragments :: navbar"/>
+<div class="w3-col m6 w3-padding-large">
+    <h1 class="w3-center" th:text="'Your Name, ' + ${name} + '!'"></h1><br>
+    <h1 class="w3-center"> ADD A FRIEND </h1><br>
+
+    <form th:action="@{/addFriend}"  method="post">
+        <div class="form-group">
+            <input type="text" size="40" name="friendEmail" id="filePath" class="form-control-file"   >
+        </div>
+        <button type="submit" class="btn btn-primary" >Add Friend</button>
+
+        <!-- <button type="submit" class="btn btn-primary">Upload File</button> -->
+    </form>
+
+
+</div>
+
+</body>
+</html>
+
