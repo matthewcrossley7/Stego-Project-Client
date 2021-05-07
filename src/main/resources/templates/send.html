@@ -7,7 +7,7 @@
 <body>
 <div  th:replace="fragments :: navbar"/>
 <div class="w3-col m6 w3-padding-large">
-    <h1 class="w3-center" th:text="'Select an image to send'"></h1><br>
+    <h1 class="w3-center" th:text="'Sending image to friend'"></h1><br>
     <div th:if="${status == 'success'}">
         <p th:text="'Successfully sent file ' + ${sentFile}"></p>
     </div>
@@ -21,7 +21,7 @@
         <p th:text="'No email or file selected '"></p>
     </div>
     <form action="#" th:action="@{/send(email=${toEmail})}"  method="post">
-        <select name="friend" >
+        Select friend <select name="friend" >
             <option th:text="'Select a friend'" th:value="'unselected'"/>
             <option th:each="friend :${friendArray}"
                     th:text="${friend}" th:value="${friend}" />
@@ -31,7 +31,7 @@
 
         </select>
         <div class="form-group">                            <!--th:value="${fileName}"-->
-            <input type="file" name="fileName"  class="form-control-file" th:value="${fileName}"  accept="image/x-png" >
+            Select image <input type="file" name="fileName"  class="form-control-file" th:value="${fileName}"  accept="image/x-png" >
         </div>
         <button type="submit" >
             Click To Send

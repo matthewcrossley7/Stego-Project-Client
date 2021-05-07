@@ -1,8 +1,6 @@
 package com.example.demo;
 
 
-
-import net.sf.image4j.util.ConvertUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +20,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
+
 import java.io.*;
 import java.util.Base64;
 import java.util.Map;
 
-//was just @Controller before
-//@RestController
+
 @Controller
 public class GETController {
     String msg;
@@ -39,95 +34,57 @@ public class GETController {
     Map userAttributes;
     imageMsg[]  imageArray;
     ChatClient serverAccess;
-    @GetMapping("/greeting")
-    public String greeting(@RequestParam(name="name", required=false, defaultValue="THERE FELLOW PERSON") String name, Model model) {
 
-        model.addAttribute("name", name);
-
-        return "greeting - Copy";
-    }
+    //handles view profile header
     @GetMapping("/profile")
     public String displayProfile(Model model) {
+        //add attributes that will be shown on html
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
         model.addAttribute("filePath", filePath);
-
+        model.addAttribute("currPage", "profile");
+        //returns required html page
         return "profile";
     }
-
+    //handles when delete account button pressed
     @RequestMapping(value="/profile",params="delete",method=RequestMethod.POST)
     public RedirectView updatePath(Model model) throws JSONException, IOException {
-        System.out.println("DELETING PROFILE");
+        //create and send delete account JSON
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", "deleteAccount");
         jsonObject.put("email", userAttributes.get("email"));
         serverAccess.sendJSON(jsonObject);
         JSONObject recieveJSON = serverAccess.recieveMsg();
+        //redirect to logout page once account deleted
         return new RedirectView("/logout");
     }
+    //handles when user wants to update their file path
     @RequestMapping(value="/profile",params="update",method=RequestMethod.POST)
-    public String deleteAccount(Model model,@RequestParam String newFilePath) throws IOException, JSONException {
-        System.out.println("UPDATING PROFILE");
+    public String deleteAccount(Model model,@RequestParam String newFilePath) throws IOException, JSONException { //requests required parameters from form
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
         model.addAttribute("filePath", newFilePath);
         filePath=newFilePath;
+        //create JSON object to send server
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", "updatePath");
         jsonObject.put("email", userAttributes.get("email"));
         jsonObject.put("path", newFilePath);
         serverAccess.sendJSON(jsonObject);
         JSONObject recieveJSON = serverAccess.recieveMsg();
+        model.addAttribute("currPage", "profile");
+        //return required html page
         return "profile";
     }
-   /* @PostMapping("/profile")
-    public String updateProfile(Model model,@RequestParam String newFilePath) throws JSONException, IOException {
-        System.out.println("UPDATING PROFILE");
-        model.addAttribute("name", userAttributes.get("name"));
-        model.addAttribute("email", userAttributes.get("email"));
-        model.addAttribute("filePath", newFilePath);
-        filePath=newFilePath;
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", "updatePath");
-        jsonObject.put("email", userAttributes.get("email"));
-        jsonObject.put("path", newFilePath);
-        serverAccess.sendJSON(jsonObject);
-        JSONObject recieveJSON = serverAccess.recieveMsg();
-        return "profile";
-    }
-*/
-    /*@GetMapping("/addFriend")
-    public String addFriend(Model model) {
-        model.addAttribute("email", userAttributes.get("email"));
-        model.addAttribute("name", userAttributes.get("name"));
-        return "addFriend";
-    }*/
-   /* @PostMapping("/addFriend")
-    public String addFriendPost(Model model,@RequestParam  String friendEmail) throws JSONException, IOException {
-        System.out.println(userAttributes.get("email")+" wants to add "+friendEmail);
-        if(!friendEmail.equals(userAttributes.get("email"))){
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("type", "addFriend");
-            jsonObject.put("userEmail", userAttributes.get("email"));
-            System.out.println("AYAYY " + userAttributes.get("email"));
-            jsonObject.put("friendEmail", friendEmail);
-            serverAccess.sendJSON(jsonObject);
-            JSONObject recieveJSON = serverAccess.recieveMsg();
-        }else{
-            System.out.println("YOU CANT ADD URSELF");
-            model.addAttribute("name", "YO CANT ADDURSELF");
-        }
-        return "addFriend";
-    }*/
-    public static String encodeImage(byte[] imageByteArray) {
-        return Base64.getEncoder().encodeToString(imageByteArray);
-    }
+
+    //handles when send heading is selected
     @GetMapping("/send")
     public String send(Model model,@RequestParam(name="email", required=false, defaultValue="null") String email,@RequestParam(defaultValue = "")  String status,@RequestParam(defaultValue = "")  String fileSent) throws JSONException, IOException {
         model.addAttribute("toEmail", email);
         model.addAttribute("image", "C:\\Users\\mcrossley\\IdeaProjects\\Stego Project Oauth\\demo\\src\\main\\java\\com\\example\\demo\\download.png");
         model.addAttribute("email", userAttributes.get("email"));
         model.addAttribute("name", userAttributes.get("name"));
+        //adds attributed depending on GET value of 'status' of previous request
         if(status.equals("success")){
             model.addAttribute("status","success");
             model.addAttribute("sentFile",fileSent);
@@ -138,164 +95,161 @@ public class GETController {
         }else if(status.equals("noEmail")){
             model.addAttribute("status","noEmail");
         }
+        //create JSON object to request list of user's friends
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type","viewFriends");
         jsonObject.put("email",userAttributes.get("email"));
         serverAccess.sendJSON(jsonObject);
         JSONObject friendList = serverAccess.recieveMsg();
-        System.out.println("YOU HAVE " +friendList.length() + "FRIENDS");
+        //create array of list of friends
         String[] friendArray = new String[friendList.length()];
         for(int x=0;x<friendList.length();x++){
+            //instantiate array values
             friendArray[x]= friendList.getString("email"+String.valueOf(x+1));
         }
         model.addAttribute("friendArray", friendArray);
-
-
+        model.addAttribute("currPage", "send");
+//return send html page
         return "send";
     }
-
+    //called after user sends image to a friend
     @PostMapping("/send")
     public RedirectView sendPost(@RequestParam(defaultValue = "null")  String fileName,@RequestParam String email,@RequestParam String friend, Model model) throws IOException, JSONException {
         System.out.println("---"+friend+"----"+fileName);
+        //handles if no friend or image selected
         if(friend.equals("unselected") && fileName.equals("null")){
-            return new RedirectView("http://localhost:8081/send?status=neither");
+            return new RedirectView("http://localhost:8081/send?status=neither");   //redirect to URL
         }
+        //handles if no image selected
         if(fileName.equals("null")){
             model.addAttribute("email", email);
             System.out.println("---"+email);
             return new RedirectView("http://localhost:8081/send?status=noImage");
         }
+        //handles if no friend selected
         if(friend.equals("unselected")){
             model.addAttribute("email", email);
             System.out.println("YOU DIDNT CHOOSE AN EMAIL");
             return new RedirectView("http://localhost:8081/send?status=noEmail");
         }
 
-        System.out.println("I GOT "+fileName+"sending to ");
-        System.out.println(filePath);
-
+        //create full file path of image location
         String completePath = filePath+ "\\"+ fileName;
-        System.out.println(completePath);
-        //image theImage = new image(completePath);
-        //theImage.readImage();
+
+     //convert image to base64 string. Code taken from https://grokonez.com/java/java-advanced/java-8-encode-decode-an-image-base64
         File file = new File(completePath);
-        //Image conversion to byte array
         FileInputStream imageInFile = new FileInputStream(file);
         byte imageData[] = new byte[(int) file.length()];
         imageInFile.read(imageData);
+        String imageDataString = Base64.getEncoder().encodeToString(imageData);
 
-        //Image conversion byte array in Base64 String
-        String imageDataString = encodeImage(imageData);
-        System.out.println(imageDataString);
         imageInFile.close();
-        System.out.println("Image Successfully Manipulated!");
-        System.out.println("SENDING TO EMAIL "+email);
+        //create JSON object to send to server
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type","sendImage");
         jsonObject.put("fromEmail",userAttributes.get("email"));
         jsonObject.put("toEmail",friend);
         jsonObject.put("image",imageDataString);
-       // System.out.println(imageDataString);
+
         serverAccess.sendJSON(jsonObject);
         JSONObject recieveJSON = serverAccess.recieveMsg();
-       // model.addAttribute("greeting", greeting);
+
+        //redirect to URL
         return new RedirectView("/send?status=success&fileSent="+fileName);
     }
+    //handles when user selects a friend from dropdown box
+    @RequestMapping(value="/viewMsgs",params="selectUser",method=RequestMethod.POST)
+    public RedirectView selectUser(@RequestParam String selectUser) throws IOException {
+
+        if(selectUser.charAt(selectUser.length()-1)==','){
+            selectUser = selectUser.substring(0,selectUser.length()-1);
+        }
+        //redirect to URL and POST email of friend selected
+        return new RedirectView("/viewMsgs?email="+selectUser);
+    }
+    //handles when user selects View Messages
     @GetMapping("/viewMsgs")
     public String viewMsgs(@RequestParam(defaultValue = "")  String email,Model model,@RequestParam(defaultValue = "")  String downloadStatus,@RequestParam(defaultValue = "")  String deleteStatus,@RequestParam(defaultValue = "")  String msg) throws JSONException, IOException {
-        if(email.equals("")){
-            System.out.println("FROM ANYONE");
-        }else{
-            System.out.println("FROM "+email);
-        }
-        System.out.println(downloadStatus);
+        //adds information to html page displayed depending on GET value
         if(downloadStatus.equals("success")){
             model.addAttribute("status", "downloaded");
-            model.addAttribute("newFileName", "NEW DOWNLOAD");
-            System.out.println("SUCCESS DOWNLOADED"+downloadStatus);
-        }else{
-            System.out.println("JUST A NORMAL"+downloadStatus);
         }
         if(deleteStatus.equals("success")){
             model.addAttribute("status", "deleted");
-            System.out.println("SUCCESS DOWNLOADED"+downloadStatus);
-        }else{
-            System.out.println("JUST A NORMAL"+downloadStatus);
         }
-        System.out.println("ABOUT TO MAYBE ADD A MSG"+msg);
         if(!msg.equals("")){
             model.addAttribute("msg", decodedImageMsg);
-            System.out.println("ADDING MSG" + msg);
         }
-        JSONObject jsonObject = new JSONObject();
-        if(!email.equals("")){
-
-
-
-        jsonObject.put("type","viewMsgs");
-        jsonObject.put("email",userAttributes.get("email"));
-        jsonObject.put("fromEmail",email);
-        System.out.println("MY REQUEST "+jsonObject.toString());
-        serverAccess.sendJSON(jsonObject);
-        JSONObject recieveJSON = serverAccess.recieveMsg();
-
-        String[] imageFrom = new String[recieveJSON.length()];
-        String[] imageTo = new String[recieveJSON.length()];
-        String[] imageTime = new String[recieveJSON.length()];
-        String[] imageString = new String[recieveJSON.length()];
-        imageArray = new imageMsg[recieveJSON.length()];
-        for(int x=0;x<recieveJSON.length();x++){
-            //imageArray[x]= recieveJSON.getString("image"+String.valueOf(x+1));
-            //System.out.println(imageArray[x]);
-            JSONObject imageJson = new JSONObject(recieveJSON.getString("image"+String.valueOf(x+1)));
-            //System.out.println(imageJson.getString("image"));
-            //System.out.println(imageJson.getString("time"));
-            //System.out.println(imageJson.getString("fromEmail"));
-            if(imageJson.getString("fromEmail")==userAttributes.get("email")){
-                imageFrom[x]=imageJson.getString("fromEmail");
-                imageTo[x]= (String) userAttributes.get("email");
-            }else{
-                imageTo[x]=imageJson.getString("fromEmail");
-                imageFrom[x]= (String) userAttributes.get("email");
-            }
-              imageTime[x]=imageJson.getString("time");
-            //imageString[x]=imageJson.getString("image");
-            imageArray[x] = new imageMsg(imageJson.getString("fromEmail"),imageJson.getString("time"),imageJson.getString("image"),imageJson.getString("toEmail"),imageJson.getInt("imageID"));
-            imageString[x]= imageJson.getString("fromEmail")+"  at time " + imageJson.getString("time");
-        }
-       // model.addAttribute("imageArray", imageString);
-        model.addAttribute("imageTo", imageTo);
-        model.addAttribute("imageFrom", imageFrom);
-        model.addAttribute("imageTime", imageTime);
-        model.addAttribute("imageArray", imageArray);
-        model.addAttribute("fromEmail", email   );
-        model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
+        model.addAttribute("name", userAttributes.get("name"));
+        JSONObject jsonObject = new JSONObject();
+
+        if(!email.equals("")){
+            //create JSON object to request messages with a specific user
+            jsonObject.put("type","viewMsgs");
+            jsonObject.put("email",userAttributes.get("email"));
+            jsonObject.put("fromEmail",email);
+            serverAccess.sendJSON(jsonObject);
+
+            //create arrays to hold information about the messages
+            JSONObject recieveJSON = serverAccess.recieveMsg();
+            String[] imageFrom = new String[recieveJSON.length()];
+            String[] imageTo = new String[recieveJSON.length()];
+            String[] imageTime = new String[recieveJSON.length()];
+            String[] imageString = new String[recieveJSON.length()];
+            imageArray = new imageMsg[recieveJSON.length()];
+            for(int x=0;x<recieveJSON.length();x++){
+                JSONObject imageJson = new JSONObject(recieveJSON.getString("image"+String.valueOf(x+1)));
+                //depending on who message is from different arrays are added to
+                if(imageJson.getString("fromEmail")==userAttributes.get("email")){
+                    imageFrom[x]=imageJson.getString("fromEmail");
+                    imageTo[x]= (String) userAttributes.get("email");
+                }else{
+                    imageTo[x]=imageJson.getString("fromEmail");
+                    imageFrom[x]= (String) userAttributes.get("email");
+                }
+                //add value to array holding time message is sent from JSON object
+                  imageTime[x]=imageJson.getString("time");
+                imageArray[x] = new imageMsg(imageJson.getString("fromEmail"),imageJson.getString("time"),imageJson.getString("image"),imageJson.getString("toEmail"),imageJson.getInt("imageID"));
+                imageString[x]= imageJson.getString("fromEmail")+"  at time " + imageJson.getString("time");
+            }
+            //add information that will be displayed on the html page
+            model.addAttribute("imageTo", imageTo);
+            model.addAttribute("imageFrom", imageFrom);
+            model.addAttribute("imageTime", imageTime);
+            model.addAttribute("imageArray", imageArray);
+            model.addAttribute("fromEmail", email);
+            model.addAttribute("name", userAttributes.get("name"));
+            model.addAttribute("email", userAttributes.get("email"));
         }
+        //create JSON object to request list of user's friends
         jsonObject = new JSONObject();
         jsonObject.put("type","viewFriends");
         jsonObject.put("email",userAttributes.get("email"));
         serverAccess.sendJSON(jsonObject);
         JSONObject friendList = serverAccess.recieveMsg();
-
         String[] friendArray = new String[friendList.length()];
         model.addAttribute("friendArray", friendArray);
         for(int x=0;x<friendList.length();x++){
-            friendArray[x]= friendList.getString("email"+String.valueOf(x+1));
+            friendArray[x]= friendList.getString("email"+String.valueOf(x+1));  //initiate list of friends array
         }
+        model.addAttribute("currPage", "viewMsgs");
 
-       // model.addAttribute("imageArray", imageArray);
+        //return viewMsgs html page
         return "viewMsgs";
     }
+    //handles when user wants to download an image
     @RequestMapping(value="/viewMsgs",params="imageString",method=RequestMethod.POST)
     public RedirectView image1(@RequestParam  String imageString,@RequestParam String fileName,@RequestParam(defaultValue = "") String email) throws IOException {
-        System.out.println("IAMGEI  IS "+imageString+"   "+email);
-        byte[] imageByteArray = decodeImage(imageArray[Integer.parseInt(imageString)].image);
+
+        //decodes specified image and saves image to specified location
+        String base64Image = imageArray[Integer.parseInt(imageString)].image;
+        byte[] imageByteArray = Base64.getDecoder().decode(base64Image);
         FileOutputStream imageOutFile = new FileOutputStream(filePath+"\\"+fileName+".png");
         imageOutFile.write(imageByteArray);
         imageOutFile.close();
-        System.out.println("SUCCESSFULLY SAVED IMAGE");
-        System.out.println("Image block called"+imageString);
+
+        //redirects to required URL
         if(email.equals("")){
             return new RedirectView("/viewMsgs?downloadStatus=success");
         }else{
@@ -303,217 +257,188 @@ public class GETController {
         }
 
     }
+    //handles when user wants to delete an image
     @RequestMapping(value="/viewMsgs",params="delete",method=RequestMethod.POST)
     public RedirectView delete(@RequestParam  String delete,@RequestParam(defaultValue = "") String email) throws JSONException, IOException {
-        System.out.println("delete block called"+delete);
-        System.out.println("DELETE IMAGE ID " + imageArray[Integer.parseInt(delete)].imageID);
+        //Create JSON object to delete specified image
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type","deleteMsg");
+        //add the id of message to delete
         jsonObject.put("imageID",imageArray[Integer.parseInt(delete)].imageID);
         serverAccess.sendJSON(jsonObject);
         JSONObject result = serverAccess.recieveMsg();
+        //redirects to URL
         if(email.equals("")){
             return new RedirectView("/viewMsgs?deleteStatus=success");
         }else{
             return new RedirectView("/viewMsgs?email="+email+"&deleteStatus=success");
         }
     }
+    //handles when user wants to extract a message from the image
     @RequestMapping(value="/viewMsgs",params="decode",method=RequestMethod.POST)
     public RedirectView decode(@RequestParam  String decode,@RequestParam  String key,@RequestParam(defaultValue = "") String email) throws IOException {
-        System.out.println("decode block called"+decode);
+
+        //create an image variable of message
         image theImage = new image();
         theImage.setString(imageArray[Integer.parseInt(decode)].image);
-
+        //find centre of image
         imageCentre center = theImage.isCentre();
+
         if(center==null){
-            //model.addAttribute("msg","error couldnt find any message");
+            //if image isn't valid redirect
             return new RedirectView("/viewMsgs?email="+email+"&msg=No message found");
 
         }else{
             int length = theImage.getMsgLength(center);
-            System.out.println("IMAGE LENGTH IS  " + length);
-            System.out.println("IMAGE MESSAGE IS  " + theImage.extractData(center));
+            //extract message from image
             String msg = theImage.extractData(center);
-            System.out.println("IMAGE LENGTH IS  " + length);
-            System.out.println("IMAGE MESSAGE IS  " + msg);
-                if(!key.equals("")) {
+
+            if(!key.equals("")) {
+                //decrypt message if key provided
                 msg = decryptMsg(msg,key);
             }
             decodedImageMsg = msg;
-
+            //redirect to URL
             return new RedirectView("/viewMsgs?email="+email+"&msg=true");
-
-                //maybe set
         }
 
     }
-    @RequestMapping(value="/viewMsgs",params="selectUser",method=RequestMethod.POST)
-    public RedirectView selectUser(@RequestParam String selectUser) throws IOException {
-        System.out.println("YOYYO SELECTING USER"+selectUser);
-        if(selectUser.charAt(selectUser.length()-1)==','){
-            selectUser = selectUser.substring(0,selectUser.length()-1);
-        }
-            return new RedirectView("/viewMsgs?email="+selectUser);
 
 
-    }
-   /* @PostMapping("/viewMsgs")
-    public String downloadMsg(Model model,@RequestParam(defaultValue = "") String decode,@RequestParam(defaultValue = "") String delete,@RequestParam(defaultValue = "") String image,@RequestParam String fileName) throws JSONException, IOException {
-        System.out.println("pressed");
-        System.out.println(decode + "  " + image+ "   "+delete);
-        /*System.out.println("DSABUDIBUHSAHBDSABHDSAHBDSABHDSADSA " +delete);
-         //   System.out.println("DOWNLLOAD  AMSG" + image);
-        byte[] imageByteArray = decodeImage(image);
-        FileOutputStream imageOutFile = new FileOutputStream(filePath+"\\"+fileName+".png");
-        imageOutFile.write(imageByteArray);
-        imageOutFile.close();
-        System.out.println("SUCCESSFULLY SAVED IMAGE");
-*/
-      //  return "homepage";
-   //}
-    @GetMapping("/download")
-    public String download(Model model) throws IOException, JSONException {
-
-        return "homepage";
-    }
+   //handles when user selects View Friends page
     @GetMapping("/viewFriends")
-    public String viewFriends(Model model) throws IOException, JSONException {
-        //model.addAttribute("greeting", new Greeting());
+    public String viewFriends(Model model,@RequestParam(defaultValue = "")  String removeFriend) throws IOException, JSONException {
+
         JSONObject jsonObject = new JSONObject();
+
+        //if user wants to delete friend create JSON object
+        if(!removeFriend.equals("")){
+            jsonObject.put("type","deleteFriend");
+            jsonObject.put("email1",userAttributes.get("email"));
+            jsonObject.put("email2",removeFriend);
+            serverAccess.sendJSON(jsonObject);
+            JSONObject isSuccess = serverAccess.recieveMsg();
+        }
+        //create JSON object to view list of friends
+        jsonObject = new JSONObject();
         jsonObject.put("type","viewFriends");
         jsonObject.put("email",userAttributes.get("email"));
         serverAccess.sendJSON(jsonObject);
         JSONObject friendList = serverAccess.recieveMsg();
-        System.out.println("YOU HAVE " +friendList.length() + "FRIENDS");
+        //create and instantiate array of friends
         String[] friendArray = new String[friendList.length()];
         for(int x=0;x<friendList.length();x++){
             friendArray[x]= friendList.getString("email"+String.valueOf(x+1));
         }
-        for(int x=0;x<friendArray.length;x++){
-            System.out.println(friendArray[x]+"!!!!");
-        }
+        //add information to html page
         model.addAttribute("friendArray", friendArray);
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
+        model.addAttribute("currPage", "viewFriends");
+        //return html page
         return "viewFriends";
     }
+    //called if user wants to add a new friend
     @PostMapping("/viewFriends")
-    public RedirectView viewFriends(Model model,@RequestParam  String friendEmail) throws JSONException, IOException {
-        System.out.println(userAttributes.get("email")+" wants to add "+friendEmail);
+    public RedirectView viewFriendsPost(Model model,@RequestParam  String friendEmail) throws JSONException, IOException {
+
         if(!friendEmail.equals(userAttributes.get("email"))){
+            //create JSON object to delete user as friend
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("type", "addFriend");
             jsonObject.put("userEmail", userAttributes.get("email"));
-            System.out.println("AYAYY " + userAttributes.get("email"));
             jsonObject.put("friendEmail", friendEmail);
             serverAccess.sendJSON(jsonObject);
             JSONObject recieveJSON = serverAccess.recieveMsg();
         }else{
-            System.out.println("YOU CANT ADD URSELF");
-            model.addAttribute("name", "YO CANT ADDURSELF");
+            //if user requests to add himself
+            model.addAttribute("name", "You cant add yourself");
         }
         return new RedirectView("/viewFriends");
     }
+    //called when user is signing in for the first time
     @GetMapping("/register")
     public String register(Model model) {
-        //model.addAttribute("greeting", new Greeting());
+
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
+        //return html page
         return "register";
     }
-    @PostMapping ("/idkfunc")
-    public String idkfunc(Model model,@ModelAttribute("friendForm") imageMsg imageMsg) {
-        System.out.println("DSAUIDIBJNHSAIBJDHSABHJDSA"+imageMsg.fromEmail);
-        return "homepage";
-    }
+    //called when user enters file path to register in system
     @PostMapping ("/register")
     public RedirectView registerInDB(Model model,@RequestParam  String filePath) throws JSONException, IOException {
-        //model.addAttribute("greeting", new Greeting());
+        //create JSON object to enter user's file path in database
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type","insert");
+        jsonObject.put("type","register");
         jsonObject.put("table","user");
         jsonObject.put("email",userAttributes.get("email"));
         jsonObject.put("path",filePath);
         serverAccess.sendJSON(jsonObject);
         JSONObject returnJSON = serverAccess.recieveMsg();
-        System.out.println("REGISTERING WITH PATH "+ filePath);
+        //updates file path variable
+        this.filePath=filePath;
+        //redirect to homepage after registering
         return new RedirectView("/homepage");
     }
+    //called when user visits encode page
     @GetMapping("/encode")
-    public String encode(@RequestParam(name="user", required=false, defaultValue="defaultUser") String name,Model model) throws IOException {
+    public String encode(@RequestParam(name="user", required=false, defaultValue="defaultUser") String name,Model model) throws IOException, JSONException {
+        //Create JSON object to view list of friends
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("type","viewFriends");
+        jsonObject.put("email",userAttributes.get("email"));
+        serverAccess.sendJSON(jsonObject);
+        JSONObject friendList = serverAccess.recieveMsg();
+        //create array to store list of friends
+        String[] friendArray = new String[friendList.length()];
+        for(int x=0;x<friendList.length();x++){
+            friendArray[x]= friendList.getString("email"+String.valueOf(x+1));
+        }
 
-
+        model.addAttribute("friendArray", friendArray);
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
         model.addAttribute("msg", msg);
-
-
+        model.addAttribute("currPage", "encode");
+        //return encode html page
         return "encode";
     }
-    private String encryptMsg(String msg, String key){
-        String encryptedMsg;
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < msg.length(); i++)
-            sb.append((char)(msg.charAt(i) ^ key.charAt(i % key.length())));
-        String result = sb.toString();
-        encryptedMsg = result;
-        // encryptedMsg=msg;
-        System.out.println("XOR IS "+encryptedMsg);
-        sb = new StringBuilder();
-        int blocks = (int)Math.floor((double)msg.length()/(double) key.length());
-
-        for(int x = 0;x<blocks;x++){
-            // System.out.println("XXX"+x);
-            for(int y = 0;y<key.length();y++){
-                sb.append(encryptedMsg.charAt((x+1)*key.length()-y-1));
-            }
-        }
-        for(int x= blocks*key.length();x<encryptedMsg.length();x++){
-            System.out.println(x);
-            sb.append(encryptedMsg.charAt(x));
-        }
-        encryptedMsg=sb.toString();
-        System.out.println(encryptedMsg + "  after");
-        return encryptedMsg;
-    }
-    @PostMapping("/encode")
-    public String encodeImagePost(Model model,@RequestParam String fileName,@RequestParam String msg,@RequestParam String key,@RequestParam String newFileName,@RequestParam(name="bitDepth", required=false, defaultValue="1") int bitDepth,@RequestParam(name="seperation", required=false, defaultValue="0") int seperation,@RequestParam String fillImage) throws JSONException, IOException {
-        System.out.println("ENCODING " + filePath + "  " + fileName+ " with " + msg + "  fsa"+newFileName+"   "+seperation);
-        System.out.println("AYAYAYAY  " + fillImage);
-        String encryptedMsg;
+   //called when user selects create stego-image
+    @RequestMapping(value = "/encode", method = RequestMethod.POST, params = "encode")
+    public String encodeImagePost(Model model,@RequestParam String fileName,@RequestParam String msg,@RequestParam String key,@RequestParam String newFileName,@RequestParam(name="bitDepth", required=false, defaultValue="1") int bitDepth,@RequestParam(name="separation", required=false, defaultValue="0") int separation,@RequestParam String fillImage) throws JSONException, IOException {
+         String encryptedMsg;
+        //encrypt message if key provided
         if(!key.equals("")){
-            System.out.println("ORIGINAL IS "+msg);
             encryptedMsg=encryptMsg(msg,key);
-            System.out.println("ENCRYPTED IT "+encryptedMsg);
         }else{
             encryptedMsg = msg;
         }
-
         int length = encryptedMsg.length();
 
-
-
+        //read in image selected
         image theImage = new image(filePath+"\\"+fileName);
         theImage.readImage();
         theImage.readPixels();
 
-        System.out.println("OUTPUT DEPTH " + bitDepth);
         if(fillImage.equals("Y")){
-            System.out.println("YYYYY");
-            theImage.hidemsgLength(length,bitDepth,-1);
-        }else{
-            System.out.println("NNNNN");
-            theImage.hidemsgLength(length,bitDepth,seperation);
+            //calculated maximum separation if option selected
+            separation = theImage.getMaxSeparation(length,bitDepth);
+            theImage.hideMetaData(length,bitDepth,separation);
         }
+        //hide the length of message, number of LSBs used and separation between pixels in cover image
+        theImage.hideMetaData(length,bitDepth,separation);
+        //hide the contents of the message, also obtains number of characters not successfully encoded
+        int numOutOfRange = theImage.hideMessage(encryptedMsg);
 
-        int numOutOfRange = theImage.hideData(encryptedMsg);
+        //handle if multiple sequences of bits representing centre present
         if(theImage.isDoubleCentre()){
             model.addAttribute("status","failure");
         }else if(numOutOfRange>0){
             model.addAttribute("status","partial");
             model.addAttribute("msg",msg);
-            model.addAttribute("failed",(int)Math.ceil(numOutOfRange/3));
-
+            model.addAttribute("failed",(int)Math.ceil((double) numOutOfRange/3));
+            //save created stego-image
             theImage.saveNewImage(filePath+"\\"+newFileName+".png");
         }else{
             model.addAttribute("status","success");
@@ -523,117 +448,134 @@ public class GETController {
             model.addAttribute("msg",msg);
             newFileName=newFileName+".png";
             model.addAttribute("fileName",newFileName);
-
+            model.addAttribute("separation",separation);
+            model.addAttribute("bitDepth",bitDepth);
         }
-     //   imageCentre center = theImage.findCentre();
-       // theImage.getMsgLength(center);
-
-          //theImage.findCentre();
-
-        return "encode";
-    }
-    @GetMapping("/decode")
-    public String decode(@RequestParam(name="user", required=false, defaultValue="defaultUser") String name, Model model) throws IOException {
-   /* public String decode(@RequestParam(name="user", required=false, defaultValue="defaultUser") String name, Model model) throws IOException {*/
-
-
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
-       // image theImage = new image("C:\\Users\\mcrossley\\IdeaProjects\\Stego Project Oauth\\demo\\src\\main\\java\\com\\example\\demo\\Output.png");
-        //image theImage = new image(filePath);
-
-       // theImage.readImage();
-       // theImage.findCentre();
-        //int length = theImage.getMsgLength();
-        //System.out.println("IMAGE LENGTH IS  " + length);
-        //System.out.println("IMAGE MESSAGE IS  " + theImage.extractData());
-       // System.out.println("DECODING");
-        return "decode";
+        model.addAttribute("currPage", "encode");
+        //return encode html page
+        return "encode";
     }
+    //called if user requests to encode secret message and send in one step
+    @RequestMapping(value = "/encode", method = RequestMethod.POST, params = "encodeSend")
+    public String encodeImagePostSend(Model model,@RequestParam String friend, @RequestParam String fileName,@RequestParam String msg,@RequestParam String key,@RequestParam(name="bitDepth", required=false, defaultValue="1") int bitDepth,@RequestParam(name="separation", required=false, defaultValue="0") int separation,@RequestParam String fillImage) throws JSONException, IOException {
+        //handles if no friend selected
+        if(friend.equals("unselected")){
+            model.addAttribute("status","noFriendSelected");
+            return "encode";
+        }
+        //encrypt message if needed
+        String encryptedMsg;
+        if(!key.equals("")){
+            encryptedMsg=encryptMsg(msg,key);
+        }else{
+            encryptedMsg = msg;
+        }
 
-    @PostMapping("/decode")
-    public String decodeImage(Model model,@RequestParam String fileName,@RequestParam String key) throws JSONException, IOException {
-        System.out.println("DECDING " + filePath + "  " + fileName);
+        int length = encryptedMsg.length();
         image theImage = new image(filePath+"\\"+fileName);
         theImage.readImage();
-       // imageCentre center = theImage.findCentre();
+        theImage.readPixels();
+        if(fillImage.equals("Y")){
+            //find max separation if required
+            separation = theImage.getMaxSeparation(length,bitDepth);
+        }
+        //hide message meta data
+        theImage.hideMetaData(length,bitDepth,separation);
+        int numOutOfRange = theImage.hideMessage(encryptedMsg);
+        if(theImage.isDoubleCentre()){
+            model.addAttribute("status","failure");
+        }else if(numOutOfRange>0){
+            model.addAttribute("status","partial");
+            model.addAttribute("msg",msg);
+            model.addAttribute("failed",(int)Math.ceil((double) numOutOfRange/3));
+        }else{
+            model.addAttribute("status","success");
+
+            msg = "'"+msg+"'";
+            model.addAttribute("msg",msg);
+            model.addAttribute("separation",separation);
+            model.addAttribute("bitDepth",bitDepth);
+        }
+        //temporarily save created image so it can be converted to base 64 string and sent to server
+        theImage.saveNewImage(filePath+"\\tempImagetoSend.png");
+        File file = new File(filePath+"\\tempImagetoSend.png");
+        FileInputStream imageInFile = new FileInputStream(file);
+        byte imageData[] = new byte[(int) file.length()];
+        imageInFile.read(imageData);
+        String imageDataString = Base64.getEncoder().encodeToString(imageData);
+        imageInFile.close();
+        //create JSON object to send to server
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("type","sendImage");
+        jsonObject.put("fromEmail",userAttributes.get("email"));
+        jsonObject.put("toEmail",friend);
+        jsonObject.put("image",imageDataString);
+        serverAccess.sendJSON(jsonObject);
+        JSONObject recieveJSON = serverAccess.recieveMsg();
+        //delete temporary image file
+        file.delete();
+        model.addAttribute("name", userAttributes.get("name"));
+        model.addAttribute("email", userAttributes.get("email"));
+        model.addAttribute("currPage", "encode");
+        //return encode html page
+        return "encode";
+    }
+    //called when user navigates to decode page
+    @GetMapping("/decode")
+    public String decode(@RequestParam(name="user", required=false, defaultValue="defaultUser") String name, Model model) throws IOException {
+        model.addAttribute("name", userAttributes.get("name"));
+        model.addAttribute("email", userAttributes.get("email"));
+
+        model.addAttribute("currPage", "decode");
+        //returns decode html page
+        return "decode";
+    }
+    //called when user is extracting a message from an image
+    @PostMapping("/decode")
+    public String decodeImage(Model model,@RequestParam String fileName,@RequestParam String key) throws JSONException, IOException {
+        //read in specified image
+        image theImage = new image(filePath+"\\"+fileName);
+        theImage.readImage();
+       //located the centre of the image
         imageCentre center = theImage.isCentre();
         if(center==null){
-            model.addAttribute("msg","error couldnt find any message");
+            model.addAttribute("msg","error couldn't find any message");
         }else{
             int length = theImage.getMsgLength(center);
-           // System.out.println("IMAGE LENGTH IS  " + length);
-           // System.out.println("IMAGE MESSAGE IS  " + theImage.extractData(center));
             String msg = theImage.extractData(center);
-            System.out.println("Extracted msg is "+msg+" with key"+key);
+            //decrypt message if key provided
             if(!key.equals("")) {
                 msg = decryptMsg(msg,key);
             }
-
-
-
             model.addAttribute("msg",msg);
         }
-
+        model.addAttribute("name", userAttributes.get("name"));
+        model.addAttribute("email", userAttributes.get("email"));
         model.addAttribute("fileName",fileName);
+        model.addAttribute("currPage", "decode");
+        //return html page
         return "decode";
     }
-    private String decryptMsg(String msg,String key){
-        StringBuilder sb = new StringBuilder();
-        int blocks = (int)Math.floor((double)msg.length()/(double) key.length());
-
-        for(int x = 0;x<blocks;x++){
-            //     System.out.println("XXX"+x);
-            for(int y = 0;y<key.length();y++){
-                sb.append(msg.charAt((x+1)*key.length()-y-1));
-
-                if(y<key.length()/2){
-                    //    sb.append(msg.charAt(x*key.length()+y+key.length()/2));
-                }else{
-                    // sb.append(msg.charAt(x*key.length()+y-key.length()/2));
-                }
-            }
-        }
-        for(int x= blocks*key.length();x<msg.length();x++){
-            System.out.println(x);
-            sb.append(msg.charAt(x));
-        }
-        msg = sb.toString();
-        System.out.println("DECRYPTED IS " + msg);
-        sb = new StringBuilder();
-        for (int i = 0; i < msg.length(); i++)
-            sb.append((char) (msg.charAt(i) ^ key.charAt(i % key.length())));
-        msg = sb.toString();
-        System.out.println("UNXORED IS " + msg);
-        return msg;
-    }
+   //handles when user is viewing the homepage
     @GetMapping("/homepage")
     public String test(@RequestParam(name="user", required=false, defaultValue="defaultUser") String name, Model model) throws IOException, JSONException {
         model.addAttribute("name", userAttributes.get("name"));
         model.addAttribute("email", userAttributes.get("email"));
-       // image theImage = new image("C:\\Users\\mcrossley\\IdeaProjects\\Stego Project Oauth\\demo\\src\\main\\java\\com\\example\\demo\\Output.png");
-       // theImage.readImage();
-       // theImage.findCentre();
-       // System.out.println("howdieeee");
 
-       // serverAccess.sendMsg("HOMEPAGE " + userAttributes.get("name"));
-
-        JSONObject json = new JSONObject();
-        json.put("type","login");
-        json.put("email",userAttributes.get("email"));
-
-        System.out.println(json.toString());
-     //   serverAccess.sendMsg(json.toString());
+        model.addAttribute("currPage", "home");
+        //return html page
         return "homepage";
     }
 
-
+    //redirects to homepage
     @GetMapping("/")
-    public String homepage() {
+    public RedirectView homepage() {
 
-        return "homepage";
+        return new RedirectView("/homepage");
     }
-
+    //handles failed sign in attempts
     @Autowired
     private OAuth2AuthorizedClientService authorizedClientService;
     @GetMapping("/loginFailure")
@@ -641,9 +583,10 @@ public class GETController {
         System.out.println("you failed to login ");
         return "loginFailure";
     }
+    //handles successful sign in
     @GetMapping("/loginSuccess")
     public RedirectView getLoginInfo(Model model, OAuth2AuthenticationToken authentication) throws IOException, JSONException {
-    System.out.println("YOU ARE NOW LOGGING IN YAYA");
+
         OAuth2AuthorizedClient client = authorizedClientService
                 .loadAuthorizedClient(
                         authentication.getAuthorizedClientRegistrationId(),
@@ -666,29 +609,76 @@ public class GETController {
 
         serverAccess = new ChatClient();
         int port =1777 ;
-        String address = "localhost";
-       // address="https://mcrossleytest.azurewebsites.net";
+
+        String address = "86.9.92.222";
+        //connect to server
+        serverAccess.SetPortAddress(address, port);
+        //create login JSON request
         JSONObject json = new JSONObject();
         json.put("type","login");
         json.put("email",userAttributes.get("email"));
-        serverAccess.SetPortAddress(address, port);
-        System.out.println(json.toString());
         serverAccess.sendJSON(json);
         JSONObject reply = serverAccess.recieveMsg();
+
         if(reply.getBoolean("isRegistered")==false){
-            System.out.println("YOU ARE NEW USER");
+            //redirects to register page if new user
             return new RedirectView("/register");
         }else{
-            System.out.println("WELCOME BACK");
+            //redirects to homepage if existing user
             filePath= reply.getString("filePath");
-            System.out.println("FILE PATH IS "+filePath);
+
             return new RedirectView("/homepage");
-           /* return new RedirectView("http://localhost:8080/register");*/
+
         }
     }
-
-    public static byte[] decodeImage(String imageDataString) {
-        return Base64.getDecoder().decode(imageDataString);
+    //function encrypts a given message with a given key
+    private String encryptMsg(String msg, String key){
+        String encryptedMsg;
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < msg.length(); i++) {
+            sb.append((char)(msg.charAt(i) ^ key.charAt(i % key.length())));
+            //XORs each character of message with a character from key
+        }
+        encryptedMsg = sb.toString();
+        sb = new StringBuilder();
+        int blocks = (int)Math.floor((double)msg.length()/(double) key.length());
+        for(int x = 0;x<blocks;x++){
+            for(int y = 0;y<key.length();y++){
+                sb.append(encryptedMsg.charAt((x+1)*key.length()-y-1));
+                //Rearrange order of characters in message
+            }
+        }
+        for(int x= blocks*key.length();x<encryptedMsg.length();x++){
+            sb.append(encryptedMsg.charAt(x));
+            //Handles outlying characters in case message length is not divisible by key length
+        }
+        encryptedMsg=sb.toString();
+        //returns encrypted message
+        return encryptedMsg;
     }
-
+    //decrypt provided message with provided key
+    private String decryptMsg(String msg,String key){
+        StringBuilder sb = new StringBuilder();
+        String decryptedMsg;
+        int blocks = (int)Math.floor((double)msg.length()/(double) key.length());
+        for(int x = 0;x<blocks;x++){
+            for(int y = 0;y<key.length();y++){
+                sb.append(msg.charAt((x+1)*key.length()-y-1));
+                //Rearrange order of secret message
+            }
+        }
+        for(int x= blocks*key.length();x<msg.length();x++){
+            sb.append(msg.charAt(x));
+            //Handles outlying characters in case message length is not divisible by key length
+        }
+        decryptedMsg = sb.toString();
+        sb = new StringBuilder();
+        for (int i = 0; i < msg.length(); i++) {
+            sb.append((char) (decryptedMsg.charAt(i) ^ key.charAt(i % key.length())));
+            //XORs each character of encrypted message with character from key
+        }
+        decryptedMsg = sb.toString();
+        //return decrypted message
+        return decryptedMsg;
+    }
 }

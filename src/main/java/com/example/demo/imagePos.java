@@ -5,12 +5,15 @@ public class imagePos {
     private char direction;
     private int currDistance;
     private int maxLength;
+    //used to represent a position in the spiral structure
     public imagePos(int[] currPos,char direction,int currDistance, int maxLength){
         this.currPos=currPos;
         this.direction=direction;
         this.currDistance=currDistance;
         this.maxLength=maxLength;
     }
+
+
     public int[] getCurrPos(){
         return currPos;
     }

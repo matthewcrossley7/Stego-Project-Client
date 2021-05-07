@@ -6,19 +6,61 @@
 
 </head>
 <body>
-
+<div th:if="${status == 'failure'}">
+    <p th:text="'Failed encoding since multiple centres occur, try another image'"></p>
+</div>
 <!--https://www.youtube.com/watch?v=IeK-Imp9_Q0&ab_channel=CodeJava -->
 <div th:fragment="navbar">
     <h1 class="w3-center" th:text="'Logged in as: ' + ${name} + ' ' + ${email}"></h1><br>
-    <a href="/homepage">Home</a>
-    <a href="/encode">Encode</a>
-    <a href="/decode">Decode</a>
-    <a href="/viewFriends">View Friends</a>
-    <a href="/send">Send</a>
-
-    <!--<a href="/addFriend">Add Friend</a> -->
-    <a href="/viewMsgs">View Messages</a>
-    <a href="/profile">Profile</a>
+    <span th:if="${currPage == 'home'}">
+        <a href="/homepage"><b>Home</b></a>
+    </span>
+    <span th:unless="${currPage == 'home'}">
+        <a href="/homepage">Home</a>
+    </span>
+    &nbsp
+    <span th:if="${currPage == 'encode'}">
+        <a href="/encode"><b>Encode</b></a>
+    </span>
+    <span th:unless="${currPage == 'encode'}">
+        <a href="/encode">Encode</a>
+    </span>
+    &nbsp
+    <span th:if="${currPage == 'decode'}">
+        <a href="/decode"><b>Decode</b></a>
+    </span>
+    <span th:unless="${currPage == 'decode'}">
+        <a href="/decode">Decode</a>
+    </span>
+    &nbsp
+    <span th:if="${currPage == 'viewFriends'}">
+        <a href="/viewFriends"><b>View Friends</b></a>
+    </span>
+    <span th:unless="${currPage == 'viewFriends'}">
+        <a href="/viewFriends">View Friends</a>
+    </span>
+    &nbsp
+    <span th:if="${currPage == 'send'}">
+        <a href="/send"><b>Send</b></a>
+    </span>
+    <span th:unless="${currPage == 'send'}">
+        <a href="/send">Send</a>
+    </span>
+    &nbsp
+    <span th:if="${currPage == 'viewMsgs'}">
+        <a href="/viewMsgs"><b>View Messages</b></a>
+    </span>
+    <span th:unless="${currPage == 'viewMsgs'}">
+        <a href="/viewMsgs">View Messages</a>
+    </span>
+    &nbsp
+    <span th:if="${currPage == 'profile'}">
+        <a href="/profile"><b>Profile</b></a>
+    </span>
+    <span th:unless="${currPage == 'profile'}">
+        <a href="/profile">Profile</a>
+    </span>
+    &nbsp
     <a href="/logout">Logout</a>
 </div>
 </body>

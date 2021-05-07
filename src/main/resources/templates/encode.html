@@ -7,42 +7,57 @@
 <body>
 <div  th:replace="fragments :: navbar"/>
 <div class="w3-col m6 w3-padding-large">
-    <h1 class="w3-center" th:text="'SENDING IMAGE TO , ' + ${email} + '!'"></h1><br>
+
     <div th:if="${status == 'success'}">
-        <p th:text="'Successfully encoded ' + ${msg}+' in '+${fileName}"></p>
+        <p th:text="'Successfully encoded ' + ${msg}+' in '+${fileName} + ' using ' + ${bitDepth} +' LSBs and ' +${separation} + ' separation between pixels'"></p>
     </div>
     <div th:if="${status == 'failure'}">
-        <p th:text="'Failed encoding since multiple centres occur, try another image'"></p>
+        <p th:text="'Failed to create stego-image since multiple sequences of bits representing centre occur, try another cover image'"></p>
     </div>
     <div th:if="${status == 'partial'}">
         <p th:text="'Successfully encoded part of message: '+ ${msg}+'. ' +${failed} +' characters unable to be encoded ' "></p>
     </div>
+    <br><br>
     <form action="#" th:action="@{/encode}"  method="post">
+        <b>Stego-image Configurability (optional)</b><br>
+        Number of LSB's to encode (default=1) <input type="text" name="bitDepth" id="bitDepth" class="form-control-file" th:value="${bitDepth}"  ><br>
+        Separation of embedded pixels 0-4095 (default=0) <input type="text" name="separation" id="separation" class="form-control-file" th:value="${separation}"  >
+        or select 'Yes' to use maximum separation value <!--<input type="checkbox" name="fillImage" th:checked="${fillImage}"/> <br> -->
+        <select name="fillImage">
+            <option th:value="N" th:text="No" size="10"></option>
+            <option th:value="Y" th:text="Yes" size="10"></option>
+        </select> <br> <br> <br> <br>
+
+
+
         <div class="form-group">
-            <input type="file" name="fileName" id="fileName" class="form-control-file" th:value="${fileName}" accept="image/x-png" >
+            Select cover image <input type="file" name="fileName" id="fileName" class="form-control-file" th:value="${fileName}" accept="image/x-png" >
         </div>
         <div class="form-group">
-            Message to encode<input type="text" size="100" name="msg" id="msg" class="form-control-file" th:value="${msg}"  ><br>
-            Key to use<input type="text" name="key" id="key" class="form-control-file" th:value="${key}"  ><br>
-            Number of LSB's to encode (default=1)<input type="text" name="bitDepth" id="bitDepth" class="form-control-file" th:value="${bitDepth}"  ><br>
-            Seperation of embedded pixels 0-4095 (default=0)<input type="text" name="seperation" id="seperation" class="form-control-file" th:value="${seperation}"  >
-            or select 'Yes' fill whole image <!--<input type="checkbox" name="fillImage" th:checked="${fillImage}"/> <br> -->
-            <select name="fillImage">
-                <option th:value="N" th:text="No" size="10"></option>
-                <option th:value="Y" th:text="Yes" size="10"></option>
-
-            </select> <br>
-
-
-
-            Name of encoded image<input type="text" size="50" name="newFileName" id="newFileName" class="form-control-file" th:value="${newFileName}"  >.png
+            Message to encode <input type="text" size="80" name="msg" id="msg" class="form-control-file" th:value="${msg}"  ><br>
+            Key to use <input type="text" name="key" id="key" class="form-control-file" th:value="${key}"  ><br>
+            Name of encoded image<input type="text" size="50" name="newFileName" id="newFileName" class="form-control-file" th:value="${newFileName}"  >.png &nbsp &nbsp &nbsp &nbsp &nbsp   <b>Or send directly to friend</b>
+            &nbsp &nbsp &nbsp &nbsp Select a friend   <select name="friend">
+                <option th:text="'Select a friend'" th:value="'unselected'"/>
+                <option th:each="friend :${friendArray}"
+                        th:text="${friend}" th:value="${friend}" />
+                <!--<ul th:each="friend : ${friendArray}" >
+                    <option th:text="${friend}" th:value="${friend}"/>
+                </ul>-->
+            </select>
         </div>
 
-        <button type="submit" onClick="return empty()">
-            Click To Encode
-        </button>
+        <button type="submit" name="encode" value = "encode" onClick="return empty()">
+            Click To Encode and Save
+        </button>   &nbsp   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; <button type="submit" name="encodeSend" value="encodeSend" onClick="return empty()"> Click To Encode and Send </button>
+
+
+
 
     </form>
+    <br> <br>
+
+
 </div>
 
 </body>

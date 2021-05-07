@@ -7,7 +7,7 @@
 <body>
 <div  th:replace="fragments :: navbar"/>
 <div class="w3-col m6 w3-padding-large">
-    <h1 class="w3-center" th:text="'Your Name, ' + ${name} + '!'"></h1><br>
+
     <form th:action="@{/viewFriends}"  method="post">
         <div class="form-group">
             <input type="text" size="40" name="friendEmail" id="filePath" class="form-control-file"   >
@@ -17,11 +17,14 @@
     </form>
 
     <span th:text="'You have ' + ${friendArray.length} + ' friends'"></span>
-    <ul th:each="friend : ${friendArray}">
-        <li th:text="${friend}">  </li><a th:href="@{/send(email=${friend})}">send message</a>
-        <a th:href="@{/viewMsgs(email=${friend})}">view conversation</a>
-    </ul>
+    <form>
 
+    <ul th:each="friend : ${friendArray}">
+       <li th:text="${friend}">  </li> <!--<a th:href="@{/send(email=${friend})}">send message</a>
+        <a th:href="@{/viewMsgs(email=${friend})}">view conversation</a>-->
+        <button type="submit" name ="removeFriend" th:value="${friend}">Remove Friend</button><br>
+    </ul>
+    </form>
 
 </div>
 

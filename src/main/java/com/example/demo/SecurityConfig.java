@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+//Used to allow sign in with Google OAuth2 taken from https://www.baeldung.com/spring-security-5-oauth2-login
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -26,22 +27,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                 .logoutSuccessUrl("/oauth_login")
                 .permitAll();
-        System.out.println("Welcome to stego project login");
+
     }
 }
 
-/*@Configuration
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    @Override
-    public void configure(HttpSecurity http) throws Exception {
-
-        http
-                .antMatcher("/**").authorizeRequests()
-                .antMatchers(new String[]{ "/greeting"}).permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .oauth2Login()
-        .and()
-        .logout().logoutSuccessUrl("/");
-    }
-}*/

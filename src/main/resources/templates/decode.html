@@ -9,7 +9,7 @@
 <div class="w3-col m6 w3-padding-large">
     <h1 >Select a file to decode </h1><br>
     <div th:if="${msg != null}">
-       <span th:text="'The encoded message of ' + ${fileName}+' is: '"></span> <h1><span th:text="${msg}"></span> </h1>
+       <span th:text="'The message extracted from ' + ${fileName}+' is: '"></span> <h1><span th:text="${msg}"></span> </h1>
     </div>
     <form action="#" th:action="@{/decode}"  method="post">
         <div class="form-group">
@@ -26,7 +26,9 @@
 </body>
 </html>
 
+
 <script>
+    //form validation code
     function empty() {
 
     var x;

@@ -8,10 +8,10 @@
 <div  th:replace="fragments :: navbar"/>
 <!--<span th:text="'You have ' + ${imageFrom.length} + ' Messages'"></span> -->
 <div th:if="${status == 'downloaded'}">
-    <p th:text="'Successfully download file ' + ${newFileName}"></p>
+    <p th:text="'Successfully downloaded image '"></p>
 </div>
 <div th:if="${status == 'deleted'}">
-    <p th:text="'Successfully deleted file '"></p>
+    <p th:text="'Successfully deleted image '"></p>
 </div>
 <div th:if="${msg != null}">
     <p th:text="'The message is: '+${msg}"></p>
@@ -34,7 +34,7 @@
            </form>          <!-- th:object ="${test}"-->
             <form action="#" th:action="@{/viewMsgs}"  method="post">
                 <input type="hidden"  name="email" th:value="${fromEmail}">
-             Enter name of file: <input type="text"  name="fileName" id="fileName" class="form-control-file" th:value="${filePath}"  >.png <br>
+             Enter filename to download as: <input type="text"  name="fileName" id="fileName" class="form-control-file" th:value="${filePath}"  >.png <br>
                 Enter key to decode: <input type="text"  name="key" id="key" class="form-control-file" th:value="${key}"  >
 
             <ul th:each="from,itrStat : ${imageArray}" >                    <!--email=${itrStat.index}-->

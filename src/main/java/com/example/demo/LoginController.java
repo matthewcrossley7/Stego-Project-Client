@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import java.util.HashMap;
 import java.util.Map;
 
+//used to allow for sign in using Google OAuth2 taken from https://www.baeldung.com/spring-security-5-oauth2-login
 @Controller
 public class LoginController {
 
