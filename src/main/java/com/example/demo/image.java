@@ -90,7 +90,6 @@ public class image {
     }
     //hides the metadata of the message and creates the sequence of bits that represent the image centre
     public void hideMetaData(int length,int bitDepth,int separation) {
-        String binary = Integer.toString(length,2);     //gets the length of message as binary
         this.separation=separation;
         this.bitDepth=bitDepth;
         int pixel, newPixel;
@@ -98,71 +97,93 @@ public class image {
         Color color;
         int[] topLeft;
         int[] currPos;
+        //finds the location of the centre depending on image dimensions
         if(width%2==0 && height%2==0){
-            topLeft = new int[]{(width/2)-1,(height/2)-2};   //finds the location of the centre depending on image dimensions
+            topLeft = new int[]{(width/2)-1,(height/2)-2};
         }else if(width%2==0 && height%2!=0){
             topLeft = new int[]{(width/2)-2,(height/2)-1};
         }else{
             topLeft = new int[]{(width/2)-1,(height/2)-1};
         }
         currPos = new int[]{topLeft[0]-1,topLeft[1]};
-        imagePos imagePos = new imagePos(currPos,'S',0,3);  //initialise spiral structure
-        //embedding bits to represent centre of image
-        for(int x=0;x<3;x++){                                             //iterate over the centre 9 pixels
+        //initialise spiral structure
+        imagePos imagePos = new imagePos(currPos,'S',0,3);
+        //iterate over the centre 9 pixels
+        for(int x=0;x<3;x++){
             for(int y=0;y<3;y++){
-                if(x==0 &&y ==0){                                         //if pixel is the top left of centre
-                    pixel = img.getRGB(topLeft[0], topLeft[1]);           //obtain pixel value
+                //if pixel is the top left of centre change LSBs to '010'
+                if(x==0 &&y ==0){
+                    pixel = img.getRGB(topLeft[0], topLeft[1]);
                     color = new Color(pixel, true);
-                    newPixel = getNewColour(color,"010",1);   //get new pixel value after embedding bits '010' in LSB
-                    img.setRGB( topLeft[0],topLeft[1],newPixel);          //set new pixel value in image
+                    newPixel = getNewColour(color,"010",1);
+                    img.setRGB( topLeft[0],topLeft[1],newPixel);
                 }else{
-                    pixel = img.getRGB(topLeft[0]+x, topLeft[1]+y);  //obtain pixel value
+                    //if pixel is not top left of centre change LSBs to '101'
+                    pixel = img.getRGB(topLeft[0]+x, topLeft[1]+y);
                     color = new Color(pixel, true);
-                    newPixel = getNewColour(color,"101",1);    //get new pixel value after embedding bits '101' in LSB
-                    img.setRGB(topLeft[0]+x,topLeft[1]+y, newPixel); //set new pixel value in image
+                    newPixel = getNewColour(color,"101",1);
+                    img.setRGB(topLeft[0]+x,topLeft[1]+y, newPixel);
                 }
             }
         }
+        //convert the length of image to binary
+        String binary = Integer.toString(length,2);
         StringBuilder sb = new StringBuilder(binary);
+        //pad length of message in binary with 0s so length is 15
         for(int z=0;z<15-binary.length();z++){
-            sb.insert(0,'0');                        //pad binary length with 0s so length is 15
-        }
-        binary=sb.toString();
-        for(int x = 0;x<5;x++){                               //loop over 5 pixels of image
-            asBinary=binary.substring(x*3,x*3+3);             //select 3 bits of the binary
-            currPos = imagePos.getCurrPos();
-            pixel = img.getRGB(currPos[0], currPos[1]);       //retrieve current pixel value of position
-            color = new Color(pixel, true);
-            newPixel = getNewColour(color,asBinary,1);  //calculate the new pixel value after embedding bits at bit depth 1
-            img.setRGB(currPos[0], currPos[1], newPixel);
-            imagePos.incCurrDist();
-            getNextPos(imagePos);                             //find new position in spiral configuration
-        }
-        binary = Integer.toString(bitDepth-1,2);      //get binary value of bit depth being used decremented
-        sb = new StringBuilder(binary);
-        for(int z=0;z<3-binary.length();z++){                 //pad value with 0s so length is 3
             sb.insert(0,'0');
         }
-        currPos = imagePos.getCurrPos();                      //get current position in spiral diagram
-        pixel = img.getRGB(currPos[0], currPos[1]);           //get pixel value of current position
-        color = new Color(pixel, true);
-        newPixel = getNewColour(color,sb.toString(),1); //find new pixel value after embedding bits at bit depth 1
-        img.setRGB(currPos[0], currPos[1], newPixel);         //set the new pixel value in image
-        imagePos.incCurrDist();
-        getNextPos(imagePos);                                 //find new position in spiral diagram
-        binary = Integer.toString(separation,2);         //get binary value of separation between pixels being used
+        binary=sb.toString();
+        //loop over 5 pixels of image
+        for(int x = 0;x<5;x++){
+            //consider only 3 bits of the binary
+            asBinary=binary.substring(x*3,x*3+3);
+            currPos = imagePos.getCurrPos();
+            //retrieve current pixel value of position
+            pixel = img.getRGB(currPos[0], currPos[1]);
+            color = new Color(pixel, true);
+            //calculate the new pixel value after embedding bits at bit depth 1
+            newPixel = getNewColour(color,asBinary,1);
+            img.setRGB(currPos[0], currPos[1], newPixel);
+            //find the next position of pixel in spiral configuration
+            imagePos.incCurrDist();
+            getNextPos(imagePos);
+        }
+        //get binary value of number of LSBs being used decremented
+        binary = Integer.toString(bitDepth-1,2);
         sb = new StringBuilder(binary);
-        for(int z=0;z<12-binary.length();z++){                //pad binary value with 0s so length is 12
+        //pad value with 0s so length is 3
+        for(int z=0;z<3-binary.length();z++){
+            sb.insert(0,'0');
+        }
+        //get current position in spiral diagram
+        currPos = imagePos.getCurrPos();
+        pixel = img.getRGB(currPos[0], currPos[1]);
+        color = new Color(pixel, true);
+        //find new pixel value after embedding bits at bit depth 1 and set to new pixel value
+        newPixel = getNewColour(color,sb.toString(),1);
+        img.setRGB(currPos[0], currPos[1], newPixel);
+        //find the next position of pixel in spiral configuration
+        imagePos.incCurrDist();
+        getNextPos(imagePos);
+        //get binary value of separation between pixels being used
+        binary = Integer.toString(separation,2);
+        sb = new StringBuilder(binary);
+        //pad binary value with 0s so length is 12
+        for(int z=0;z<12-binary.length();z++){
             sb.insert(0,'0');
         }
         for(int x = 0;x<4;x++){
-            asBinary=sb.toString().substring(x*3,x*3+3);       //select 3 bits of the binary
+            //consider only 3 bits of the binary
+            asBinary=sb.toString().substring(x*3,x*3+3);
             currPos = imagePos.getCurrPos();
-            pixel = img.getRGB(currPos[0], currPos[1]);        //retrieve current pixel value of position
+            //find new pixel value after embedding bits at bit depth 1 and set to new pixel value
+            pixel = img.getRGB(currPos[0], currPos[1]);
             color = new Color(pixel, true);
-            newPixel = getNewColour(color,asBinary,1);   //find new pixel value after embedding bits at bit depth 1
-            img.setRGB(currPos[0], currPos[1], newPixel);      //set the new pixel value in image
-            imagePos.incCurrDist();                            //find new position in spiral diagram
+            newPixel = getNewColour(color,asBinary,1);
+            img.setRGB(currPos[0], currPos[1], newPixel);
+            //find the next position of pixel in spiral configuration
+            imagePos.incCurrDist();
             getNextPos(imagePos);
         }
     return;

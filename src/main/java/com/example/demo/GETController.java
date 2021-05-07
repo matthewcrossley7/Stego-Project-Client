@@ -28,6 +28,7 @@ import java.util.Map;
 
 @Controller
 public class GETController {
+    String address = "86.9.92.222";
     String msg;
     String filePath;
     String decodedImageMsg;
@@ -610,7 +611,7 @@ public class GETController {
         serverAccess = new ChatClient();
         int port =1777 ;
 
-        String address = "86.9.92.222";
+
         //connect to server
         serverAccess.SetPortAddress(address, port);
         //create login JSON request
